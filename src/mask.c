@@ -91,15 +91,15 @@ __STATIC int Mask_writeFormatInformation(int width, unsigned char *frame, int ma
 	int x, y; \
 	int b = 0; \
 	\
-for (y = 0; y < width; y++) {
+for (y = 0; y < width; y++) {\
 \
-for (x = 0; x < width; x++) {
+for (x = 0; x < width; x++) {\
 	\
-	if (*s & 0x80) {
+	if (*s & 0x80) {\
 		\
 		*d = *s; \
-	}
-	else {
+	}\
+	else {\
 		\
 		*d = *s ^ ((__exp__) == 0); \
 	}\

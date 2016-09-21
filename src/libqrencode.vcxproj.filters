@@ -46,36 +46,4 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="bitstream.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="mask.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="mmask.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="mqrspec.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="qrencode.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="qrencode_inner.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="qrinput.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="qrspec.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="rsecc.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="split.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-  </ItemGroup>
 </Project>

@@ -70,6 +70,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -91,18 +92,6 @@
     <ClCompile Include="qrspec.c" />
     <ClCompile Include="rsecc.c" />
     <ClCompile Include="split.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="bitstream.h" />
-    <ClInclude Include="mask.h" />
-    <ClInclude Include="mmask.h" />
-    <ClInclude Include="mqrspec.h" />
-    <ClInclude Include="qrencode.h" />
-    <ClInclude Include="qrencode_inner.h" />
-    <ClInclude Include="qrinput.h" />
-    <ClInclude Include="qrspec.h" />
-    <ClInclude Include="rsecc.h" />
-    <ClInclude Include="split.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

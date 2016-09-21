@@ -54,15 +54,15 @@ __STATIC void MMask_writeFormatInformation(int version, int width, unsigned char
 #define MASKMAKER(__exp__) \
 	int x, y; \
 	\
-for (y = 0; y < width; y++) {
+for (y = 0; y < width; y++) {\
 \
-for (x = 0; x < width; x++) {
+for (x = 0; x < width; x++) {\
 	\
-	if (*s & 0x80) {
+	if (*s & 0x80) {\
 		\
 		*d = *s; \
-	}
-	else {
+	}\
+	else {\
 		\
 		*d = *s ^ ((__exp__) == 0); \
 	}\
