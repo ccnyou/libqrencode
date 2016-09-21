@@ -55,3 +55,5 @@ use/missing
 html/
 massif.out.*
 gmon.out
+*.sdf
+sln/libqrencode.v12.suo
