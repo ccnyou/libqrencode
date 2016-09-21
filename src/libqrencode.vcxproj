@@ -83,15 +83,17 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bitstream.c" />
-    <ClCompile Include="mask.c" />
-    <ClCompile Include="mmask.c" />
-    <ClCompile Include="mqrspec.c" />
-    <ClCompile Include="qrencode.c" />
-    <ClCompile Include="qrinput.c" />
-    <ClCompile Include="qrspec.c" />
-    <ClCompile Include="rsecc.c" />
-    <ClCompile Include="split.c" />
+    <ClCompile Include="bitstream.cpp" />
+    <ClCompile Include="bmpgen.cpp" />
+    <ClCompile Include="mask.cpp" />
+    <ClCompile Include="mmask.cpp" />
+    <ClCompile Include="mqrspec.cpp" />
+    <ClCompile Include="qrencode.cpp" />
+    <ClCompile Include="qrinput.cpp" />
+    <ClCompile Include="qrspec.cpp" />
+    <ClCompile Include="rscode.cpp" />
+    <ClCompile Include="rsecc.cpp" />
+    <ClCompile Include="split.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -512,7 +512,7 @@ __STATIC QRcode *QRcode_encodeMask(QRinput *input, int mask)
 		for (j = 0; j < 8; j++) {
 			p = FrameFiller_next(filler);
 			if (p == NULL)  goto EXIT;
-			*p = 0x02 | ((bit & code) != 0);
+			*p = 0x02 | (int)((bit & code) != 0);
 			bit = bit >> 1;
 		}
 	}
@@ -596,7 +596,7 @@ __STATIC QRcode *QRcode_encodeMaskMQR(QRinput *input, int mask)
 			for (j = 0; j < raw->oddbits; j++) {
 				p = FrameFiller_next(filler);
 				if (p == NULL) goto EXIT;
-				*p = 0x02 | ((bit & code) != 0);
+				*p = 0x02 | (int)((bit & code) != 0);
 				bit = bit >> 1;
 			}
 		}
@@ -605,7 +605,7 @@ __STATIC QRcode *QRcode_encodeMaskMQR(QRinput *input, int mask)
 			for (j = 0; j < 8; j++) {
 				p = FrameFiller_next(filler);
 				if (p == NULL) goto EXIT;
-				*p = 0x02 | ((bit & code) != 0);
+				*p = 0x02 | (int)((bit & code) != 0);
 				bit = bit >> 1;
 			}
 		}

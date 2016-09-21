@@ -18,31 +18,37 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bitstream.c">
+    <ClCompile Include="bitstream.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="mask.c">
+    <ClCompile Include="bmpgen.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="mmask.c">
+    <ClCompile Include="mask.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="mqrspec.c">
+    <ClCompile Include="mmask.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="qrencode.c">
+    <ClCompile Include="mqrspec.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="qrinput.c">
+    <ClCompile Include="qrencode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="qrspec.c">
+    <ClCompile Include="qrinput.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="rsecc.c">
+    <ClCompile Include="qrspec.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="split.c">
+    <ClCompile Include="rscode.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="rsecc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="split.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
