@@ -118,7 +118,7 @@ bool QRCode2Bitmap(const QRcode* qrcode, const BitmapOption* bitmapOption, std::
 	return true;
 }
 
-bool String2QRCodeBitmap(const QRCodeOption* qrcodeOption, BitmapOption* bitmapOption, std::vector<char>* result)
+bool QRCodeBitmap(const QRCodeOption* qrcodeOption, BitmapOption* bitmapOption, std::vector<char>* result)
 {
 	if (!qrcodeOption || !bitmapOption || !result)
 	{
