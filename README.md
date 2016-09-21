@@ -5,7 +5,7 @@ QR Code encoding library
 
 ## Usage:
 ```c++
-std::string responseString(response.begin(), response.end());
+std::string responseString("https://github.com/ccnyou/libqrencode");
 std::vector<char> bitmapVector;
 QRCodeOption qrcodeOption;
 BitmapOption bitmapOption;
