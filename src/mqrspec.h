@@ -19,8 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef MQRSPEC_H
-#define MQRSPEC_H
+#ifndef __MQRSPEC_H__
+#define __MQRSPEC_H__
 
 #include "qrencode.h"
 
@@ -35,24 +35,24 @@
 
 /**
  * Return maximum data code length (bits) for the version.
- * @param version version of the symbol
- * @param level error correction level
+ * @param version
+ * @param level
  * @return maximum size (bits)
  */
 extern int MQRspec_getDataLengthBit(int version, QRecLevel level);
 
 /**
  * Return maximum data code length (bytes) for the version.
- * @param version version of the symbol
- * @param level error correction level
+ * @param version
+ * @param level
  * @return maximum size (bytes)
  */
 extern int MQRspec_getDataLength(int version, QRecLevel level);
 
 /**
  * Return maximum error correction code length (bytes) for the version.
- * @param version version of the symbol
- * @param level error correction level
+ * @param version
+ * @param level
  * @return ECC size (bytes)
  */
 extern int MQRspec_getECCLength(int version, QRecLevel level);
@@ -60,21 +60,21 @@ extern int MQRspec_getECCLength(int version, QRecLevel level);
 /**
  * Return a version number that satisfies the input code length.
  * @param size input code length (byte)
- * @param level error correction level
+ * @param level
  * @return version number
  */
 extern int MQRspec_getMinimumVersion(int size, QRecLevel level);
 
 /**
  * Return the width of the symbol for the version.
- * @param version version of the symbol
+ * @param version
  * @return width
  */
 extern int MQRspec_getWidth(int version);
 
 /**
  * Return the numer of remainder bits.
- * @param version version of the symbol
+ * @param version
  * @return number of remainder bits
  */
 extern int MQRspec_getRemainder(int version);
@@ -84,17 +84,17 @@ extern int MQRspec_getRemainder(int version);
  *****************************************************************************/
 
 /**
- * Return the size of length indicator for the mode and version.
- * @param mode encode mode
- * @param version vesion of the symbol
+ * Return the size of lenght indicator for the mode and version.
+ * @param mode
+ * @param version
  * @return the size of the appropriate length indicator (bits).
  */
 extern int MQRspec_lengthIndicator(QRencodeMode mode, int version);
 
 /**
  * Return the maximum length for the mode and version.
- * @param mode encode mode
- * @param version vesion of the symbol
+ * @param mode
+ * @param version
  * @return the maximum length (bytes)
  */
 extern int MQRspec_maximumWords(QRencodeMode mode, int version);
@@ -106,7 +106,7 @@ extern int MQRspec_maximumWords(QRencodeMode mode, int version);
 /**
  * Return BCH encoded version information pattern that is used for the symbol
  * of version 7 or greater. Use lower 18 bits.
- * @param version vesion of the symbol
+ * @param version
  * @return BCH encoded version information pattern
  */
 extern unsigned int MQRspec_getVersionPattern(int version);
@@ -117,9 +117,9 @@ extern unsigned int MQRspec_getVersionPattern(int version);
 
 /**
  * Return BCH encoded format information pattern.
- * @param mask mask number
- * @param version version of the symbol
- * @param level error correction level
+ * @param mask
+ * @param version
+ * @param level
  * @return BCH encoded format information pattern
  */
 extern unsigned int MQRspec_getFormatInfo(int mask, int version, QRecLevel level);
@@ -132,10 +132,15 @@ extern unsigned int MQRspec_getFormatInfo(int mask, int version, QRecLevel level
  * Return a copy of initialized frame.
  * When the same version is requested twice or more, a copy of cached frame
  * is returned.
- * @param version version of the symbol
+ * @param version
  * @return Array of unsigned char. You can free it by free().
  */
 extern unsigned char *MQRspec_newFrame(int version);
+
+/**
+ * Clear the frame cache. Typically for debug.
+ */
+extern void MQRspec_clearCache(void);
 
 /******************************************************************************
  * Mode indicator
@@ -149,4 +154,4 @@ extern unsigned char *MQRspec_newFrame(int version);
 #define MQRSPEC_MODEID_8         2
 #define MQRSPEC_MODEID_KANJI     3
 
-#endif /* MQRSPEC_H */
+#endif /* __MQRSPEC_H__ */

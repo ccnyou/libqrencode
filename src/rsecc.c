@@ -62,11 +62,11 @@ static void RSECC_initLookupTable(void)
 	aindex[0] = symbols;
 
 	b = 1;
-	for(i = 0; i < symbols; i++) {
+	for (i = 0; i < symbols; i++) {
 		alpha[i] = b;
 		aindex[b] = i;
 		b <<= 1;
-		if(b & (symbols + 1)) {
+		if (b & (symbols + 1)) {
 			b ^= proot;
 		}
 		b &= symbols;
@@ -86,16 +86,16 @@ static void generator_init(int length)
 	int g[max_generatorSize + 1];
 
 	g[0] = 1;
-	for(i = 0; i < length; i++) {
+	for (i = 0; i < length; i++) {
 		g[i + 1] = 1;
 		/* Because g[0] never be zero, skipped some conditional checks. */
-		for(j = i; j > 0; j--) {
-			g[j] = g[j - 1] ^  alpha[(aindex[g[j]] + i) % symbols];
+		for (j = i; j > 0; j--) {
+			g[j] = g[j - 1] ^ alpha[(aindex[g[j]] + i) % symbols];
 		}
 		g[0] = alpha[(aindex[g[0]] + i) % symbols];
 	}
 
-	for(i = 0; i <= length; i++) {
+	for (i = 0; i <= length; i++) {
 		generator[length - min_length][i] = aindex[g[i]];
 	}
 
@@ -111,36 +111,37 @@ int RSECC_encode(int data_length, int ecc_length, const unsigned char *data, uns
 #if HAVE_LIBPTHREAD
 	pthread_mutex_lock(&RSECC_mutex);
 #endif
-	if(!initialized) {
+	if (!initialized) {
 		RSECC_init();
 	}
 #if HAVE_LIBPTHREAD
 	pthread_mutex_unlock(&RSECC_mutex);
 #endif
 
-	if(ecc_length > max_length) return -1;
+	if (ecc_length > max_length) return -1;
 
 	memset(ecc, 0, ecc_length);
 #if HAVE_LIBPTHREAD
 	pthread_mutex_lock(&RSECC_mutex);
 #endif
-	if(!generatorInitialized[ecc_length - min_length]) generator_init(ecc_length);
+	if (!generatorInitialized[ecc_length - min_length]) generator_init(ecc_length);
 #if HAVE_LIBPTHREAD
 	pthread_mutex_unlock(&RSECC_mutex);
 #endif
 	gen = generator[ecc_length - min_length];
 
-	for(i = 0; i < data_length; i++) {
+	for (i = 0; i < data_length; i++) {
 		feedback = aindex[data[i] ^ ecc[0]];
-		if(feedback != symbols) {
-			for(j = 1; j < ecc_length; j++) {
+		if (feedback != symbols) {
+			for (j = 1; j < ecc_length; j++) {
 				ecc[j] ^= alpha[(feedback + gen[ecc_length - j]) % symbols];
 			}
 		}
 		memmove(&ecc[0], &ecc[1], ecc_length - 1);
-		if(feedback != symbols) {
+		if (feedback != symbols) {
 			ecc[ecc_length - 1] = alpha[(feedback + gen[0]) % symbols];
-		} else {
+		}
+		else {
 			ecc[ecc_length - 1] = 0;
 		}
 	}

@@ -57,3 +57,9 @@ massif.out.*
 gmon.out
 *.sdf
 sln/libqrencode.v12.suo
+src/Debug
+src/Release
+lib/
+sln/Debug
+sln/Release
+*.opensdf

@@ -1,7 +1,7 @@
 /*
  * qrencode - QR Code encoder
  *
- * Copyright (C) 2006-2014 Kentaro Fukuchi <kentaro@fukuchi.org>
+ * Copyright (C) 2006-2012 Kentaro Fukuchi <kentaro@fukuchi.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,7 +31,7 @@
 #include "mqrspec.h"
 #include "bitstream.h"
 #include "qrinput.h"
-#include "rsecc.h"
+#include "rscode.h"
 #include "split.h"
 #include "mask.h"
 #include "mmask.h"
@@ -59,14 +59,14 @@ typedef struct {
 	int count;
 } QRRawCode;
 
-static void RSblock_initBlock(RSblock *block, int dl, unsigned char *data, int el, unsigned char *ecc)
+static void RSblock_initBlock(RSblock *block, int dl, unsigned char *data, int el, unsigned char *ecc, RS *rs)
 {
 	block->dataLength = dl;
 	block->data = data;
 	block->eccLength = el;
 	block->ecc = ecc;
 
-	RSECC_encode(dl, el, data, ecc);
+	encode_rs_char(rs, data, ecc);
 }
 
 static int RSblock_init(RSblock *blocks, int spec[5], unsigned char *data, unsigned char *ecc)
@@ -74,27 +74,32 @@ static int RSblock_init(RSblock *blocks, int spec[5], unsigned char *data, unsig
 	int i;
 	RSblock *block;
 	unsigned char *dp, *ep;
+	RS *rs;
 	int el, dl;
 
 	dl = QRspec_rsDataCodes1(spec);
 	el = QRspec_rsEccCodes1(spec);
+	rs = init_rs(8, 0x11d, 0, 1, el, 255 - dl - el);
+	if (rs == NULL) return -1;
 
 	block = blocks;
 	dp = data;
 	ep = ecc;
-	for(i = 0; i < QRspec_rsBlockNum1(spec); i++) {
-		RSblock_initBlock(block, dl, dp, el, ep);
+	for (i = 0; i < QRspec_rsBlockNum1(spec); i++) {
+		RSblock_initBlock(block, dl, dp, el, ep, rs);
 		dp += dl;
 		ep += el;
 		block++;
 	}
 
-	if(QRspec_rsBlockNum2(spec) == 0) return 0;
+	if (QRspec_rsBlockNum2(spec) == 0) return 0;
 
 	dl = QRspec_rsDataCodes2(spec);
 	el = QRspec_rsEccCodes2(spec);
-	for(i = 0; i < QRspec_rsBlockNum2(spec); i++) {
-		RSblock_initBlock(block, dl, dp, el, ep);
+	rs = init_rs(8, 0x11d, 0, 1, el, 255 - dl - el);
+	if (rs == NULL) return -1;
+	for (i = 0; i < QRspec_rsBlockNum2(spec); i++) {
+		RSblock_initBlock(block, dl, dp, el, ep, rs);
 		dp += dl;
 		ep += el;
 		block++;
@@ -103,17 +108,17 @@ static int RSblock_init(RSblock *blocks, int spec[5], unsigned char *data, unsig
 	return 0;
 }
 
-STATIC_IN_RELEASE void QRraw_free(QRRawCode *raw);
-STATIC_IN_RELEASE QRRawCode *QRraw_new(QRinput *input)
+__STATIC void QRraw_free(QRRawCode *raw);
+__STATIC QRRawCode *QRraw_new(QRinput *input)
 {
 	QRRawCode *raw;
 	int spec[5], ret;
 
 	raw = (QRRawCode *)malloc(sizeof(QRRawCode));
-	if(raw == NULL) return NULL;
+	if (raw == NULL) return NULL;
 
 	raw->datacode = QRinput_getByteStream(input);
-	if(raw->datacode == NULL) {
+	if (raw->datacode == NULL) {
 		free(raw);
 		return NULL;
 	}
@@ -125,7 +130,7 @@ STATIC_IN_RELEASE QRRawCode *QRraw_new(QRinput *input)
 	raw->dataLength = QRspec_rsDataLength(spec);
 	raw->eccLength = QRspec_rsEccLength(spec);
 	raw->ecccode = (unsigned char *)malloc(raw->eccLength);
-	if(raw->ecccode == NULL) {
+	if (raw->ecccode == NULL) {
 		free(raw->datacode);
 		free(raw);
 		return NULL;
@@ -133,12 +138,12 @@ STATIC_IN_RELEASE QRRawCode *QRraw_new(QRinput *input)
 
 	raw->blocks = QRspec_rsBlockNum(spec);
 	raw->rsblock = (RSblock *)calloc(raw->blocks, sizeof(RSblock));
-	if(raw->rsblock == NULL) {
+	if (raw->rsblock == NULL) {
 		QRraw_free(raw);
 		return NULL;
 	}
 	ret = RSblock_init(raw->rsblock, spec, raw->datacode, raw->ecccode);
-	if(ret < 0) {
+	if (ret < 0) {
 		QRraw_free(raw);
 		return NULL;
 	}
@@ -154,32 +159,34 @@ STATIC_IN_RELEASE QRRawCode *QRraw_new(QRinput *input)
  * @param raw raw code.
  * @return code
  */
-STATIC_IN_RELEASE unsigned char QRraw_getCode(QRRawCode *raw)
+__STATIC unsigned char QRraw_getCode(QRRawCode *raw)
 {
 	int col, row;
 	unsigned char ret;
 
-	if(raw->count < raw->dataLength) {
+	if (raw->count < raw->dataLength) {
 		row = raw->count % raw->blocks;
 		col = raw->count / raw->blocks;
-		if(col >= raw->rsblock[0].dataLength) {
+		if (col >= raw->rsblock[0].dataLength) {
 			row += raw->b1;
 		}
 		ret = raw->rsblock[row].data[col];
-	} else if(raw->count < raw->dataLength + raw->eccLength) {
+	}
+	else if (raw->count < raw->dataLength + raw->eccLength) {
 		row = (raw->count - raw->dataLength) % raw->blocks;
 		col = (raw->count - raw->dataLength) / raw->blocks;
 		ret = raw->rsblock[row].ecc[col];
-	} else {
+	}
+	else {
 		return 0;
 	}
 	raw->count++;
 	return ret;
 }
 
-STATIC_IN_RELEASE void QRraw_free(QRRawCode *raw)
+__STATIC void QRraw_free(QRRawCode *raw)
 {
-	if(raw != NULL) {
+	if (raw != NULL) {
 		free(raw->datacode);
 		free(raw->ecccode);
 		free(raw->rsblock);
@@ -202,37 +209,44 @@ typedef struct {
 	int count;
 } MQRRawCode;
 
-STATIC_IN_RELEASE void MQRraw_free(MQRRawCode *raw);
-STATIC_IN_RELEASE MQRRawCode *MQRraw_new(QRinput *input)
+__STATIC void MQRraw_free(MQRRawCode *raw);
+__STATIC MQRRawCode *MQRraw_new(QRinput *input)
 {
 	MQRRawCode *raw;
+	RS *rs;
 
 	raw = (MQRRawCode *)malloc(sizeof(MQRRawCode));
-	if(raw == NULL) return NULL;
+	if (raw == NULL) return NULL;
 
 	raw->version = input->version;
 	raw->dataLength = MQRspec_getDataLength(input->version, input->level);
 	raw->eccLength = MQRspec_getECCLength(input->version, input->level);
 	raw->oddbits = raw->dataLength * 8 - MQRspec_getDataLengthBit(input->version, input->level);
 	raw->datacode = QRinput_getByteStream(input);
-	if(raw->datacode == NULL) {
+	if (raw->datacode == NULL) {
 		free(raw);
 		return NULL;
 	}
 	raw->ecccode = (unsigned char *)malloc(raw->eccLength);
-	if(raw->ecccode == NULL) {
+	if (raw->ecccode == NULL) {
 		free(raw->datacode);
 		free(raw);
 		return NULL;
 	}
 
 	raw->rsblock = (RSblock *)calloc(1, sizeof(RSblock));
-	if(raw->rsblock == NULL) {
+	if (raw->rsblock == NULL) {
 		MQRraw_free(raw);
 		return NULL;
 	}
 
-	RSblock_initBlock(raw->rsblock, raw->dataLength, raw->datacode, raw->eccLength, raw->ecccode);
+	rs = init_rs(8, 0x11d, 0, 1, raw->eccLength, 255 - raw->dataLength - raw->eccLength);
+	if (rs == NULL) {
+		MQRraw_free(raw);
+		return NULL;
+	}
+
+	RSblock_initBlock(raw->rsblock, raw->dataLength, raw->datacode, raw->eccLength, raw->ecccode, rs);
 
 	raw->count = 0;
 
@@ -245,24 +259,26 @@ STATIC_IN_RELEASE MQRRawCode *MQRraw_new(QRinput *input)
  * @param raw raw code.
  * @return code
  */
-STATIC_IN_RELEASE unsigned char MQRraw_getCode(MQRRawCode *raw)
+__STATIC unsigned char MQRraw_getCode(MQRRawCode *raw)
 {
 	unsigned char ret;
 
-	if(raw->count < raw->dataLength) {
+	if (raw->count < raw->dataLength) {
 		ret = raw->datacode[raw->count];
-	} else if(raw->count < raw->dataLength + raw->eccLength) {
+	}
+	else if (raw->count < raw->dataLength + raw->eccLength) {
 		ret = raw->ecccode[raw->count - raw->dataLength];
-	} else {
+	}
+	else {
 		return 0;
 	}
 	raw->count++;
 	return ret;
 }
 
-STATIC_IN_RELEASE void MQRraw_free(MQRRawCode *raw)
+__STATIC void MQRraw_free(MQRRawCode *raw)
 {
-	if(raw != NULL) {
+	if (raw != NULL) {
 		free(raw->datacode);
 		free(raw->ecccode);
 		free(raw->rsblock);
@@ -284,8 +300,12 @@ typedef struct {
 	int mqr;
 } FrameFiller;
 
-static void FrameFiller_set(FrameFiller *filler, int width, unsigned char *frame, int mqr)
+static FrameFiller *FrameFiller_new(int width, unsigned char *frame, int mqr)
 {
+	FrameFiller *filler;
+
+	filler = (FrameFiller *)malloc(sizeof(FrameFiller));
+	if (filler == NULL) return NULL;
 	filler->width = width;
 	filler->frame = frame;
 	filler->x = width - 1;
@@ -293,6 +313,8 @@ static void FrameFiller_set(FrameFiller *filler, int width, unsigned char *frame
 	filler->dir = -1;
 	filler->bit = -1;
 	filler->mqr = mqr;
+
+	return filler;
 }
 
 static unsigned char *FrameFiller_next(FrameFiller *filler)
@@ -300,7 +322,7 @@ static unsigned char *FrameFiller_next(FrameFiller *filler)
 	unsigned char *p;
 	int x, y, w;
 
-	if(filler->bit == -1) {
+	if (filler->bit == -1) {
 		filler->bit = 0;
 		return filler->frame + filler->y * filler->width + filler->x;
 	}
@@ -310,40 +332,44 @@ static unsigned char *FrameFiller_next(FrameFiller *filler)
 	p = filler->frame;
 	w = filler->width;
 
-	if(filler->bit == 0) {
+	if (filler->bit == 0) {
 		x--;
 		filler->bit++;
-	} else {
+	}
+	else {
 		x++;
 		y += filler->dir;
 		filler->bit--;
 	}
 
-	if(filler->dir < 0) {
-		if(y < 0) {
+	if (filler->dir < 0) {
+		if (y < 0) {
 			y = 0;
 			x -= 2;
 			filler->dir = 1;
-			if(!filler->mqr && x == 6) {
+			if (!filler->mqr && x == 6) {
 				x--;
 				y = 9;
 			}
 		}
-	} else if(y == w) {
-		y = w - 1;
-		x -= 2;
-		filler->dir = -1;
-		if(!filler->mqr && x == 6) {
-			x--;
-			y -= 8;
+	}
+	else {
+		if (y == w) {
+			y = w - 1;
+			x -= 2;
+			filler->dir = -1;
+			if (!filler->mqr && x == 6) {
+				x--;
+				y -= 8;
+			}
 		}
 	}
-	if(x < 0 || y < 0) return NULL;
+	if (x < 0 || y < 0) return NULL;
 
 	filler->x = x;
 	filler->y = y;
 
-	if(p[y * w + x] & 0x80) {
+	if (p[y * w + x] & 0x80) {
 		// This tail recursion could be optimized.
 		return FrameFiller_next(filler);
 	}
@@ -351,52 +377,64 @@ static unsigned char *FrameFiller_next(FrameFiller *filler)
 }
 
 #ifdef WITH_TESTS
-unsigned char *FrameFiller_test(int version)
+extern unsigned char *FrameFiller_test(int version)
 {
 	int width;
 	unsigned char *frame, *p;
+	FrameFiller *filler;
 	int i, length;
-	FrameFiller filler;
 
 	width = QRspec_getWidth(version);
 	frame = QRspec_newFrame(version);
 	if(frame == NULL) return NULL;
-	FrameFiller_set(&filler, width, frame, 0);
+	filler = FrameFiller_new(width, frame, 0);
+	if(filler == NULL) {
+		free(frame);
+		return NULL;
+	}
 	length = QRspec_getDataLength(version, QR_ECLEVEL_L) * 8
-	       + QRspec_getECCLength(version, QR_ECLEVEL_L) * 8
-		   + QRspec_getRemainder(version);
-	for(i = 0; i < length; i++) {
-		p = FrameFiller_next(&filler);
+		+ QRspec_getECCLength(version, QR_ECLEVEL_L) * 8
+		+ QRspec_getRemainder(version);
+	for(i=0; i<length; i++) {
+		p = FrameFiller_next(filler);
 		if(p == NULL) {
+			free(filler);
 			free(frame);
 			return NULL;
 		}
 		*p = (unsigned char)(i & 0x7f) | 0x80;
 	}
+	free(filler);
 	return frame;
 }
 
-unsigned char *FrameFiller_testMQR(int version)
+extern unsigned char *FrameFiller_testMQR(int version)
 {
 	int width;
 	unsigned char *frame, *p;
+	FrameFiller *filler;
 	int i, length;
-	FrameFiller filler;
 
 	width = MQRspec_getWidth(version);
 	frame = MQRspec_newFrame(version);
 	if(frame == NULL) return NULL;
-	FrameFiller_set(&filler, width, frame, 1);
+	filler = FrameFiller_new(width, frame, 1);
+	if(filler == NULL) {
+		free(frame);
+		return NULL;
+	}
 	length = MQRspec_getDataLengthBit(version, QR_ECLEVEL_L)
-	       + MQRspec_getECCLength(version, QR_ECLEVEL_L) * 8;
-	for(i = 0; i < length; i++) {
-		p = FrameFiller_next(&filler);
+		+ MQRspec_getECCLength(version, QR_ECLEVEL_L) * 8;
+	for(i=0; i<length; i++) {
+		p = FrameFiller_next(filler);
 		if(p == NULL) {
 			fprintf(stderr, "Frame filler run over the frame!\n");
+			free(filler);
 			return frame;
 		}
 		*p = (unsigned char)(i & 0x7f) | 0x80;
 	}
+	free(filler);
 	return frame;
 }
 #endif
@@ -406,12 +444,12 @@ unsigned char *FrameFiller_testMQR(int version)
  * QR-code encoding
  *****************************************************************************/
 
-STATIC_IN_RELEASE QRcode *QRcode_new(int version, int width, unsigned char *data)
+__STATIC QRcode *QRcode_new(int version, int width, unsigned char *data)
 {
 	QRcode *qrcode;
 
 	qrcode = (QRcode *)malloc(sizeof(QRcode));
-	if(qrcode == NULL) return NULL;
+	if (qrcode == NULL) return NULL;
 
 	qrcode->version = version;
 	qrcode->width = width;
@@ -422,53 +460,58 @@ STATIC_IN_RELEASE QRcode *QRcode_new(int version, int width, unsigned char *data
 
 void QRcode_free(QRcode *qrcode)
 {
-	if(qrcode != NULL) {
+	if (qrcode != NULL) {
 		free(qrcode->data);
 		free(qrcode);
 	}
 }
 
-STATIC_IN_RELEASE QRcode *QRcode_encodeMask(QRinput *input, int mask)
+__STATIC QRcode *QRcode_encodeMask(QRinput *input, int mask)
 {
 	int width, version;
 	QRRawCode *raw;
 	unsigned char *frame, *masked, *p, code, bit;
+	FrameFiller *filler;
 	int i, j;
 	QRcode *qrcode = NULL;
-	FrameFiller filler;
 
-	if(input->mqr) {
+	if (input->mqr) {
 		errno = EINVAL;
 		return NULL;
 	}
-	if(input->version < 0 || input->version > QRSPEC_VERSION_MAX) {
+	if (input->version < 0 || input->version > QRSPEC_VERSION_MAX) {
 		errno = EINVAL;
 		return NULL;
 	}
-	if(input->level > QR_ECLEVEL_H) {
+	if (input->level > QR_ECLEVEL_H) {
 		errno = EINVAL;
 		return NULL;
 	}
 
 	raw = QRraw_new(input);
-	if(raw == NULL) return NULL;
+	if (raw == NULL) return NULL;
 
 	version = raw->version;
 	width = QRspec_getWidth(version);
 	frame = QRspec_newFrame(version);
-	if(frame == NULL) {
+	if (frame == NULL) {
 		QRraw_free(raw);
 		return NULL;
 	}
-	FrameFiller_set(&filler, width, frame, 0);
+	filler = FrameFiller_new(width, frame, 0);
+	if (filler == NULL) {
+		QRraw_free(raw);
+		free(frame);
+		return NULL;
+	}
 
-	/* interleaved data and ecc codes */
-	for(i = 0; i < raw->dataLength + raw->eccLength; i++) {
+	/* inteleaved data and ecc codes */
+	for (i = 0; i < raw->dataLength + raw->eccLength; i++) {
 		code = QRraw_getCode(raw);
 		bit = 0x80;
-		for(j = 0; j < 8; j++) {
-			p = FrameFiller_next(&filler);
-			if(p == NULL)  goto EXIT;
+		for (j = 0; j < 8; j++) {
+			p = FrameFiller_next(filler);
+			if (p == NULL)  goto EXIT;
 			*p = 0x02 | ((bit & code) != 0);
 			bit = bit >> 1;
 		}
@@ -477,117 +520,125 @@ STATIC_IN_RELEASE QRcode *QRcode_encodeMask(QRinput *input, int mask)
 	raw = NULL;
 	/* remainder bits */
 	j = QRspec_getRemainder(version);
-	for(i = 0; i < j; i++) {
-		p = FrameFiller_next(&filler);
-		if(p == NULL)  goto EXIT;
+	for (i = 0; i < j; i++) {
+		p = FrameFiller_next(filler);
+		if (p == NULL)  goto EXIT;
 		*p = 0x02;
 	}
 
 	/* masking */
-	if(mask == -2) { // just for debug purpose
+	if (mask == -2) { // just for debug purpose
 		masked = (unsigned char *)malloc(width * width);
 		memcpy(masked, frame, width * width);
-	} else if(mask < 0) {
+	}
+	else if (mask < 0) {
 		masked = Mask_mask(width, frame, input->level);
-	} else {
+	}
+	else {
 		masked = Mask_makeMask(width, frame, mask, input->level);
 	}
-	if(masked == NULL) {
+	if (masked == NULL) {
 		goto EXIT;
 	}
 	qrcode = QRcode_new(version, width, masked);
-	if(qrcode == NULL) {
-		free(masked);
-	}
 
 EXIT:
 	QRraw_free(raw);
+	free(filler);
 	free(frame);
 	return qrcode;
 }
 
-STATIC_IN_RELEASE QRcode *QRcode_encodeMaskMQR(QRinput *input, int mask)
+__STATIC QRcode *QRcode_encodeMaskMQR(QRinput *input, int mask)
 {
 	int width, version;
 	MQRRawCode *raw;
 	unsigned char *frame, *masked, *p, code, bit;
-	int i, j, length;
+	FrameFiller *filler;
+	int i, j;
 	QRcode *qrcode = NULL;
-	FrameFiller filler;
 
-	if(!input->mqr) {
+	if (!input->mqr) {
 		errno = EINVAL;
 		return NULL;
 	}
-	if(input->version <= 0 || input->version > MQRSPEC_VERSION_MAX) {
+	if (input->version <= 0 || input->version > MQRSPEC_VERSION_MAX) {
 		errno = EINVAL;
 		return NULL;
 	}
-	if(input->level > QR_ECLEVEL_Q) {
+	if (input->level > QR_ECLEVEL_Q) {
 		errno = EINVAL;
 		return NULL;
 	}
 
 	raw = MQRraw_new(input);
-	if(raw == NULL) return NULL;
+	if (raw == NULL) return NULL;
 
 	version = raw->version;
 	width = MQRspec_getWidth(version);
 	frame = MQRspec_newFrame(version);
-	if(frame == NULL) {
+	if (frame == NULL) {
 		MQRraw_free(raw);
 		return NULL;
 	}
-	FrameFiller_set(&filler, width, frame, 1);
+	filler = FrameFiller_new(width, frame, 1);
+	if (filler == NULL) {
+		MQRraw_free(raw);
+		free(frame);
+		return NULL;
+	}
 
-	/* interleaved data and ecc codes */
-	for(i = 0; i < raw->dataLength + raw->eccLength; i++) {
+	/* inteleaved data and ecc codes */
+	for (i = 0; i < raw->dataLength + raw->eccLength; i++) {
 		code = MQRraw_getCode(raw);
-		bit = 0x80;
-		if(raw->oddbits && i == raw->dataLength - 1) {
-			length = raw->oddbits;
-		} else {
-			length = 8;
+		if (raw->oddbits && i == raw->dataLength - 1) {
+			bit = 1 << raw->oddbits;
+			for (j = 0; j < raw->oddbits; j++) {
+				p = FrameFiller_next(filler);
+				if (p == NULL) goto EXIT;
+				*p = 0x02 | ((bit & code) != 0);
+				bit = bit >> 1;
+			}
 		}
-		for(j = 0; j < length; j++) {
-			p = FrameFiller_next(&filler);
-			if(p == NULL) goto EXIT;
-			*p = 0x02 | ((bit & code) != 0);
-			bit = bit >> 1;
+		else {
+			bit = 0x80;
+			for (j = 0; j < 8; j++) {
+				p = FrameFiller_next(filler);
+				if (p == NULL) goto EXIT;
+				*p = 0x02 | ((bit & code) != 0);
+				bit = bit >> 1;
+			}
 		}
 	}
 	MQRraw_free(raw);
 	raw = NULL;
 
 	/* masking */
-	if(mask == -2) { // just for debug purpose
-		masked = (unsigned char *)malloc(width * width);
-		memcpy(masked, frame, width * width);
-	} else if(mask < 0) {
+	if (mask < 0) {
 		masked = MMask_mask(version, frame, input->level);
-	} else {
+	}
+	else {
 		masked = MMask_makeMask(version, frame, mask, input->level);
 	}
-	if(masked == NULL) {
+	if (masked == NULL) {
 		goto EXIT;
 	}
 
 	qrcode = QRcode_new(version, width, masked);
-	if(qrcode == NULL) {
-		free(masked);
-	}
 
 EXIT:
 	MQRraw_free(raw);
+	free(filler);
 	free(frame);
 	return qrcode;
 }
 
 QRcode *QRcode_encodeInput(QRinput *input)
 {
-	if(input->mqr) {
+	if (input->mqr) {
 		return QRcode_encodeMaskMQR(input, -1);
-	} else {
+	}
+	else {
 		return QRcode_encodeMask(input, -1);
 	}
 }
@@ -598,24 +649,25 @@ static QRcode *QRcode_encodeStringReal(const char *string, int version, QRecLeve
 	QRcode *code;
 	int ret;
 
-	if(string == NULL) {
+	if (string == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
-	if(hint != QR_MODE_8 && hint != QR_MODE_KANJI) {
+	if (hint != QR_MODE_8 && hint != QR_MODE_KANJI) {
 		errno = EINVAL;
 		return NULL;
 	}
 
-	if(mqr) {
+	if (mqr) {
 		input = QRinput_newMQR(version, level);
-	} else {
+	}
+	else {
 		input = QRinput_new2(version, level);
 	}
-	if(input == NULL) return NULL;
+	if (input == NULL) return NULL;
 
 	ret = Split_splitStringToQRinput(string, input, hint, casesensitive);
-	if(ret < 0) {
+	if (ret < 0) {
 		QRinput_free(input);
 		return NULL;
 	}
@@ -641,20 +693,21 @@ static QRcode *QRcode_encodeDataReal(const unsigned char *data, int length, int 
 	QRcode *code;
 	int ret;
 
-	if(data == NULL || length == 0) {
+	if (data == NULL || length == 0) {
 		errno = EINVAL;
 		return NULL;
 	}
 
-	if(mqr) {
+	if (mqr) {
 		input = QRinput_newMQR(version, level);
-	} else {
+	}
+	else {
 		input = QRinput_new2(version, level);
 	}
-	if(input == NULL) return NULL;
+	if (input == NULL) return NULL;
 
 	ret = QRinput_append(input, QR_MODE_8, length, data);
-	if(ret < 0) {
+	if (ret < 0) {
 		QRinput_free(input);
 		return NULL;
 	}
@@ -671,7 +724,7 @@ QRcode *QRcode_encodeData(int size, const unsigned char *data, int version, QRec
 
 QRcode *QRcode_encodeString8bit(const char *string, int version, QRecLevel level)
 {
-	if(string == NULL) {
+	if (string == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -685,7 +738,7 @@ QRcode *QRcode_encodeDataMQR(int size, const unsigned char *data, int version, Q
 
 QRcode *QRcode_encodeString8bitMQR(const char *string, int version, QRecLevel level)
 {
-	if(string == NULL) {
+	if (string == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -702,7 +755,7 @@ static QRcode_List *QRcode_List_newEntry(void)
 	QRcode_List *entry;
 
 	entry = (QRcode_List *)malloc(sizeof(QRcode_List));
-	if(entry == NULL) return NULL;
+	if (entry == NULL) return NULL;
 
 	entry->next = NULL;
 	entry->code = NULL;
@@ -712,7 +765,7 @@ static QRcode_List *QRcode_List_newEntry(void)
 
 static void QRcode_List_freeEntry(QRcode_List *entry)
 {
-	if(entry != NULL) {
+	if (entry != NULL) {
 		QRcode_free(entry->code);
 		free(entry);
 	}
@@ -722,7 +775,7 @@ void QRcode_List_free(QRcode_List *qrlist)
 {
 	QRcode_List *list = qrlist, *next;
 
-	while(list != NULL) {
+	while (list != NULL) {
 		next = list->next;
 		QRcode_List_freeEntry(list);
 		list = next;
@@ -734,7 +787,7 @@ int QRcode_List_size(QRcode_List *qrlist)
 	QRcode_List *list = qrlist;
 	int size = 0;
 
-	while(list != NULL) {
+	while (list != NULL) {
 		size++;
 		list = list->next;
 	}
@@ -748,7 +801,7 @@ static unsigned char QRcode_parity(const char *str, int size)
 	unsigned char parity = 0;
 	int i;
 
-	for(i = 0; i < size; i++) {
+	for(i=0; i<size; i++) {
 		parity ^= str[i];
 	}
 
@@ -763,20 +816,21 @@ QRcode_List *QRcode_encodeInputStructured(QRinput_Struct *s)
 	QRcode_List *entry;
 	QRinput_InputList *list = s->head;
 
-	while(list != NULL) {
-		if(head == NULL) {
+	while (list != NULL) {
+		if (head == NULL) {
 			entry = QRcode_List_newEntry();
-			if(entry == NULL) goto ABORT;
+			if (entry == NULL) goto ABORT;
 			head = entry;
 			tail = head;
-		} else {
+		}
+		else {
 			entry = QRcode_List_newEntry();
-			if(entry == NULL) goto ABORT;
+			if (entry == NULL) goto ABORT;
 			tail->next = entry;
 			tail = tail->next;
 		}
 		tail->code = QRcode_encodeInput(list->input);
-		if(tail->code == NULL) {
+		if (tail->code == NULL) {
 			goto ABORT;
 		}
 		list = list->next;
@@ -794,7 +848,7 @@ static QRcode_List *QRcode_encodeInputToStructured(QRinput *input)
 	QRcode_List *codes;
 
 	s = QRinput_splitQRinputToStruct(input);
-	if(s == NULL) return NULL;
+	if (s == NULL) return NULL;
 
 	codes = QRcode_encodeInputStructured(s);
 	QRinput_Struct_free(s);
@@ -811,24 +865,25 @@ static QRcode_List *QRcode_encodeDataStructuredReal(
 	QRcode_List *codes;
 	int ret;
 
-	if(version <= 0) {
+	if (version <= 0) {
 		errno = EINVAL;
 		return NULL;
 	}
-	if(!eightbit && (hint != QR_MODE_8 && hint != QR_MODE_KANJI)) {
+	if (!eightbit && (hint != QR_MODE_8 && hint != QR_MODE_KANJI)) {
 		errno = EINVAL;
 		return NULL;
 	}
 
 	input = QRinput_new2(version, level);
-	if(input == NULL) return NULL;
+	if (input == NULL) return NULL;
 
-	if(eightbit) {
+	if (eightbit) {
 		ret = QRinput_append(input, QR_MODE_8, size, data);
-	} else {
+	}
+	else {
 		ret = Split_splitStringToQRinput((char *)data, input, hint, casesensitive);
 	}
-	if(ret < 0) {
+	if (ret < 0) {
 		QRinput_free(input);
 		return NULL;
 	}
@@ -843,7 +898,7 @@ QRcode_List *QRcode_encodeDataStructured(int size, const unsigned char *data, in
 }
 
 QRcode_List *QRcode_encodeString8bitStructured(const char *string, int version, QRecLevel level) {
-	if(string == NULL) {
+	if (string == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -852,7 +907,7 @@ QRcode_List *QRcode_encodeString8bitStructured(const char *string, int version, 
 
 QRcode_List *QRcode_encodeStringStructured(const char *string, int version, QRecLevel level, QRencodeMode hint, int casesensitive)
 {
-	if(string == NULL) {
+	if (string == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -865,13 +920,13 @@ QRcode_List *QRcode_encodeStringStructured(const char *string, int version, QRec
 
 void QRcode_APIVersion(int *major_version, int *minor_version, int *micro_version)
 {
-	if(major_version != NULL) {
+	if (major_version != NULL) {
 		*major_version = MAJOR_VERSION;
 	}
-	if(minor_version != NULL) {
+	if (minor_version != NULL) {
 		*minor_version = MINOR_VERSION;
 	}
-	if(micro_version != NULL) {
+	if (micro_version != NULL) {
 		*micro_version = MICRO_VERSION;
 	}
 }
@@ -879,4 +934,11 @@ void QRcode_APIVersion(int *major_version, int *minor_version, int *micro_versio
 char *QRcode_APIVersionString(void)
 {
 	return VERSION;
+}
+
+void QRcode_clearCache(void)
+{
+	QRspec_clearCache();
+	MQRspec_clearCache();
+	free_rs_cache();
 }

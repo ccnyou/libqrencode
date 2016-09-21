@@ -17,4 +17,65 @@
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="bitstream.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="mask.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="mmask.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="mqrspec.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="qrencode.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="qrinput.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="qrspec.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="rsecc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="split.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bitstream.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="mask.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="mmask.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="mqrspec.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="qrencode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="qrencode_inner.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="qrinput.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="qrspec.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="rsecc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="split.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

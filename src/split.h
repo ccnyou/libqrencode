@@ -2,7 +2,7 @@
  * qrencode - QR Code encoder
  *
  * Input data splitter.
- * Copyright (C) 2006-2013 Kentaro Fukuchi <kentaro@fukuchi.org>
+ * Copyright (C) 2006-2011 Kentaro Fukuchi <kentaro@fukuchi.org>
  *
  * The following data / specifications are taken from
  * "Two dimensional symbol -- QR-code -- Basic Specification" (JIS X0510:2004)
@@ -25,8 +25,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef SPLIT_H
-#define SPLIT_H
+#ifndef __SPLIT_H__
+#define __SPLIT_H__
 
 #include "qrencode.h"
 
@@ -42,6 +42,6 @@
  * @throw ENOMEM unable to allocate memory for input objects.
  */
 extern int Split_splitStringToQRinput(const char *string, QRinput *input,
-		QRencodeMode hint, int casesensitive);
+	QRencodeMode hint, int casesensitive);
 
-#endif /* SPLIT_H */
+#endif /* __SPLIT_H__ */
