@@ -21,9 +21,6 @@
     <ClCompile Include="bitstream.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="bmpgen.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="mask.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -49,6 +46,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="split.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="qrcodebmpgen.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -40,11 +40,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)\..\lib\</OutDir>
+    <OutDir>$(SolutionDir)..\lib\</OutDir>
     <TargetName>$(ProjectName)d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)\..\lib\</OutDir>
+    <OutDir>$(SolutionDir)..\lib\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -54,6 +54,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -84,7 +85,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bitstream.cpp" />
-    <ClCompile Include="bmpgen.cpp" />
+    <ClCompile Include="qrcodebmpgen.cpp" />
     <ClCompile Include="mask.cpp" />
     <ClCompile Include="mmask.cpp" />
     <ClCompile Include="mqrspec.cpp" />
